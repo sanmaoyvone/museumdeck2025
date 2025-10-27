@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Select Audio | Museum Deck</title>
+  <meta name="theme-color" content="#203864">
+  <style>
+    :root{
+      --navy:#203864;
+      --ink:#0f172a;
+      --panel:#111827;
+      --line:#334155;
+      --muted:#94a3b8;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      background:var(--ink);
+      color:#fff;
+      display:grid;
+      place-items:center;
+      min-height:100svh;
+      padding:20px;
+    }
+    .card{
+      width:min(820px,94vw);
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:0 10px 36px rgba(0,0,0,.35);
+      padding:22px;
+    }
+    h1{margin:0 0 8px;font-size:20px;}
+    p{margin:8px 0 16px;color:var(--muted);line-height:1.55;}
+    .badge{
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#17223a;
+      border:1px solid #2b3b5e;
+      font-size:12px;
+      color:#c7d2fe;
+      margin-left:8px;
+    }
+    .grid{
+      display:grid;
+      gap:14px;
+      grid-template-columns:1fr;
+    }
+    @media (min-width:700px){
+      .grid{grid-template-columns:1fr 1fr;}
+    }
+    .opt{
+      background:#0b1220;
+      border:1px solid #475569;
+      border-radius:14px;
+      overflow:hidden;
+      transition:transform .12s ease,background .12s ease;
+    }
+    .opt:hover{
+      transform:translateY(-2px);
+      background:#121a2a;
+    }
+    .img{
+      aspect-ratio:4/3;
+      background:#0a0f1c;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .img img{
+      max-width:100%;
+      max-height:100%;
+      display:block;
+    }
+    .meta{padding:12px 14px 14px;}
+    .title{margin:0 0 6px;font-size:15px;font-weight:700;}
+    .sub{margin:0 0 10px;font-size:13px;color:#cbd5e1;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;}
+    .btn{
+      appearance:none;
+      border:0;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      background:var(--navy);
+      color:#fff;
+      font-weight:700;
+      font-size:14px;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .ghost{
+      background:transparent;
+      border:1px solid #475569;
+      color:#e2e8f0;
+    }
+    .note{margin-top:12px;font-size:12px;color:#a3b3c7;}
+    audio{margin-top:12px;width:100%;display:none;}
+  </style>
+</head>
+<body>
+  <main class="card" role="dialog" aria-modal="true" aria-label="Select audio">
+    <h1>🎧 Select the correct audio</h1>
+    <p>
+      Due to a printing error, this QR code links to two different cards.
+      Please tap the card you are holding to listen to its audio guide.
+      <span class="badge">Affects early prints only</span>
+    </p>
+
+    <section class="grid">
+      <!-- Spade 3 -->
+      <article class="opt" data-src="https://museumdeck.com/nga/audio/NB03.mp3">
+        <div class="img">
+          <img src="https://museumdeck.com/nga/assets/thumbs/NB03.jpg" alt="Spade 3 card" loading="lazy" width="640" height="480">
+        </div>
+        <div class="meta">
+          <h2 class="title">♠️ Spade 3</h2>
+          <div class="sub">Listen to the audio for Spade 3</div>
+          <div class="row">
+            <a class="btn" href="https://museumdeck.com/nga/audio/NB03.mp3">Open audio</a>
+            <button class="btn ghost" type="button" data-play>Play here</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Diamond 4 -->
+      <article class="opt" data-src="https://museumdeck.com/nga/audio/NT04.mp3">
+        <div class="img">
+          <img src="https://museumdeck.com/nga/assets/thumbs/NT04.jpg" alt="Diamond 4 card" loading="lazy" width="640" height="480">
+        </div>
+        <div class="meta">
+          <h2 class="title">♦️ Diamond 4</h2>
+          <div class="sub">Listen to the audio for Diamond 4</div>
+          <div class="row">
+            <a class="btn" href="https://museumdeck.com/nga/audio/NT04.mp3">Open audio</a>
+            <button class="btn ghost" type="button" data-play>Play here</button>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <p class="note">Tip: If you select the same card twice, you’ll hear the same audio—no need to download again.</p>
+    <audio id="player" preload="none" controls></audio>
+
+    <noscript>
+      <p><strong>JavaScript required.</strong> You can still open manually:</p>
+      <ul>
+        <li><a href="https://museumdeck.com/nga/audio/NB03.mp3">Spade 3 audio</a></li>
+        <li><a href="https://museumdeck.com/nga/audio/NT04.mp3">Diamond 4 audio</a></li>
+      </ul>
+    </noscript>
+  </main>
+
+  <script>
+    (function(){
+      const player = document.getElementById('player');
+      document.querySelectorAll('[data-play]').forEach(btn=>{
+        btn.addEventListener('click', e=>{
+          const card = e.currentTarget.closest('.opt');
+          const src = card && card.getAttribute('data-src');
+          if(!src) return;
+          player.src = src;
+          player.style.display = 'block';
+          player.play && player.play().catch(()=>{});
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

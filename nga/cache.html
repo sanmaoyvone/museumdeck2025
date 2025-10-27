@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cache Audio - - The NGA | Museum Deck</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f4f9;
+      color: #333;
+    }
+
+    /* ===== 顶部导航栏 ===== */
+    header {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    header nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 1.2rem;
+    }
+    header nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== 主体内容 ===== */
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    button {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #1a2d52;
+    }
+
+    /* ===== 进度条 ===== */
+    .progress-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      height: 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #203864;
+      text-align: center;
+      color: white;
+      font-size: 0.8rem;
+      line-height: 20px;
+      transition: width 0.3s ease;
+    }
+
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #203864;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cache Audio</h1>
+    <nav>
+      <a href="../index.html">← Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Download The NGA All Audio Guides 🎧</h2>
+    <p>Click the button below to preload all <strong>The NGA</strong> audio for instant listening.</p>
+    <button onclick="cacheAllAudio()">Cache The NGA  Audio</button>
+
+    <div class="progress-container">
+      <div id="progress-bar" class="progress-bar">0%</div>
+    </div>
+
+    <div id="status"></div>
+  </main>
+
+  <script>
+const exhibits = [
+  { audio: "audio/NBJ.mp3" },
+  { audio: "audio/NSJ.mp3" },
+
+  { audio: "audio/NT01.mp3" },
+  { audio: "audio/NT02.mp3" },
+  { audio: "audio/NT03.mp3" },
+ { audio: "audio/NT04.mp3?bypass=1" },
+  { audio: "audio/NT04new.mp3" },
+  { audio: "audio/NT05.mp3" },
+  { audio: "audio/NT06.mp3" },
+  { audio: "audio/NT07.mp3" },
+  { audio: "audio/NT08.mp3" },
+  { audio: "audio/NT09.mp3" },
+  { audio: "audio/NT10.mp3" },
+  { audio: "audio/NT11.mp3" },
+  { audio: "audio/NT12.mp3" },
+  { audio: "audio/NT13.mp3" },
+
+  { audio: "audio/NB01.mp3" },
+  { audio: "audio/NB02.mp3" },
+  { audio: "audio/NB03.mp3" },
+  { audio: "audio/NB03new.mp3" },
+  { audio: "audio/NB04.mp3" },
+  { audio: "audio/NB05.mp3" },
+  { audio: "audio/NB06.mp3" },
+  { audio: "audio/NB07.mp3" },
+  { audio: "audio/NB08.mp3" },
+  { audio: "audio/NB09.mp3" },
+  { audio: "audio/NB10.mp3" },
+  { audio: "audio/NB11.mp3" },
+  { audio: "audio/NB12.mp3" },
+  { audio: "audio/NB13.mp3" },
+
+  { audio: "audio/NR01.mp3" },
+  { audio: "audio/NR02.mp3" },
+  { audio: "audio/NR03.mp3" },
+  { audio: "audio/NR04.mp3" },
+  { audio: "audio/NR05.mp3" },
+  { audio: "audio/NR06.mp3" },
+  { audio: "audio/NR07.mp3" },
+  { audio: "audio/NR08.mp3" },
+  { audio: "audio/NR09.mp3" },
+  { audio: "audio/NR10.mp3" },
+  { audio: "audio/NR11.mp3" },
+  { audio: "audio/NR12.mp3" },
+  { audio: "audio/NR13.mp3" },
+
+  { audio: "audio/NM01.mp3" },
+  { audio: "audio/NM02.mp3" },
+  { audio: "audio/NM03.mp3" },
+  { audio: "audio/NM04.mp3" },
+  { audio: "audio/NM05.mp3" },
+  { audio: "audio/NM06.mp3" },
+  { audio: "audio/NM07.mp3" },
+  { audio: "audio/NM08.mp3" },
+  { audio: "audio/NM09.mp3" },
+  { audio: "audio/NM10.mp3" },
+  { audio: "audio/NM11.mp3" },
+  { audio: "audio/NM12.mp3" },
+  { audio: "audio/NM13.mp3" }
+];
+
+
+    async function cacheAllAudio() {
+      const status = document.getElementById("status");
+      const bar = document.getElementById("progress-bar");
+
+      if (!('caches' in window)) {
+        status.innerText = "❌ This browser does not support offline caching.";
+        return;
+      }
+
+      const cache = await caches.open('nga-audio-cache-v1');
+      let count = 0;
+
+      status.innerText = "⏳ Caching started...";
+
+      for (const item of exhibits) {
+        try {
+          await cache.add(item.audio);
+          count++;
+          let percent = Math.round((count / exhibits.length) * 100);
+          bar.style.width = percent + "%";
+          bar.innerText = percent + "%";
+          status.innerText = `🔊 Cached ${count}/${exhibits.length}`;
+        } catch (err) {
+          console.error("❌ Failed to cache:", item.audio, err);
+        }
+      }
+
+      status.innerText = "✅ All audio cached. Ready for offline use!";
+    }
+  </script>
+</body>
+</html>

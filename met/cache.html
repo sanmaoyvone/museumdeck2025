@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cache Audio - - The MET | Museum Deck</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f4f9;
+      color: #333;
+    }
+
+    /* ===== 顶部导航栏 ===== */
+    header {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    header nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 1.2rem;
+    }
+    header nav a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== 主体内容 ===== */
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    button {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #1a2d52;
+    }
+
+    /* ===== 进度条 ===== */
+    .progress-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      margin-top: 1.5rem;
+      height: 20px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #203864;
+      text-align: center;
+      color: white;
+      font-size: 0.8rem;
+      line-height: 20px;
+      transition: width 0.3s ease;
+    }
+
+    #status {
+      margin-top: 1rem;
+      font-weight: bold;
+      color: #203864;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Cache Audio</h1>
+    <nav>
+      <a href="../index.html">← Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Download The MET All Audio Guides 🎧</h2>
+    <p>Click the button below to preload all <strong>The MET</strong> audio for instant listening.</p>
+    <button onclick="cacheAllAudio()">Cache The MET  Audio</button>
+
+    <div class="progress-container">
+      <div id="progress-bar" class="progress-bar">0%</div>
+    </div>
+
+    <div id="status"></div>
+  </main>
+
+  <script>
+    const exhibits = [
+      { audio: "audio/2025MET-K.mp3" },
+      { audio: "audio/2025METF-01.mp3" },
+      { audio: "audio/2025METF-02.mp3" },
+      { audio: "audio/2025METF-03.mp3" },
+      { audio: "audio/2025METF-04.mp3" },
+      { audio: "audio/2025METF-05.mp3" },
+      { audio: "audio/2025METF-06.mp3" },
+      { audio: "audio/2025METF-07.mp3" },
+      { audio: "audio/2025METF-08.mp3" },
+      { audio: "audio/2025METF-09.mp3" },
+      { audio: "audio/2025METF-10.mp3" },
+      { audio: "audio/2025METF-11.mp3" },
+      { audio: "audio/2025METF-12.mp3" },
+      { audio: "audio/2025METF-13.mp3" },
+      { audio: "audio/2025METH-01.mp3" },
+      { audio: "audio/2025METH-02.mp3" },
+      { audio: "audio/2025METH-03.mp3" },
+      { audio: "audio/2025METH-04.mp3" },
+      { audio: "audio/2025METH-05.mp3" },
+      { audio: "audio/2025METH-06.mp3" },
+      { audio: "audio/2025METH-07.mp3" },
+      { audio: "audio/2025METH-08.mp3" },
+      { audio: "audio/2025METH-09.mp3" },
+      { audio: "audio/2025METH-10.mp3" },
+      { audio: "audio/2025METH-11.mp3" },
+      { audio: "audio/2025METH-12.mp3" },
+      { audio: "audio/2025METH-13.mp3" },
+      { audio: "audio/2025METR-01.mp3" },
+      { audio: "audio/2025METR-02.mp3" },
+      { audio: "audio/2025METR-03.mp3" },
+      { audio: "audio/2025METR-04.mp3" },
+      { audio: "audio/2025METR-05.mp3" },
+      { audio: "audio/2025METR-06.mp3" },
+      { audio: "audio/2025METR-07.mp3" },
+      { audio: "audio/2025METR-08.mp3" },
+      { audio: "audio/2025METR-09.mp3" },
+      { audio: "audio/2025METR-10.mp3" },
+      { audio: "audio/2025METR-11.mp3" },
+      { audio: "audio/2025METR-12.mp3" },
+      { audio: "audio/2025METR-13.mp3" },
+      { audio: "audio/2025METM-01.mp3" },
+      { audio: "audio/2025METM-02.mp3" },
+      { audio: "audio/2025METM-03.mp3" },
+      { audio: "audio/2025METM-04.mp3" },
+      { audio: "audio/2025METM-05.mp3" },
+      { audio: "audio/2025METM-06.mp3" },
+      { audio: "audio/2025METM-07.mp3" },
+      { audio: "audio/2025METM-08.mp3" },
+      { audio: "audio/2025METM-09.mp3" },
+      { audio: "audio/2025METM-10.mp3" },
+      { audio: "audio/2025METM-11.mp3" },
+      { audio: "audio/2025METM-12.mp3" },
+      { audio: "audio/2025METM-13.mp3" },
+      { audio: "audio/2025MET-Q.mp3" }
+    ];
+
+    async function cacheAllAudio() {
+      const status = document.getElementById("status");
+      const bar = document.getElementById("progress-bar");
+
+      if (!('caches' in window)) {
+        status.innerText = "❌ This browser does not support offline caching.";
+        return;
+      }
+
+      const cache = await caches.open('met-audio-cache-v1');
+      let count = 0;
+
+      status.innerText = "⏳ Caching started...";
+
+      for (const item of exhibits) {
+        try {
+          await cache.add(item.audio);
+          count++;
+          let percent = Math.round((count / exhibits.length) * 100);
+          bar.style.width = percent + "%";
+          bar.innerText = percent + "%";
+          status.innerText = `🔊 Cached ${count}/${exhibits.length}`;
+        } catch (err) {
+          console.error("❌ Failed to cache:", item.audio, err);
+        }
+      }
+
+      status.innerText = "✅ All audio cached. Ready for offline use!";
+    }
+  </script>
+</body>
+</html>

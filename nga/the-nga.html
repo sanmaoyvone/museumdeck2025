@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The NGA Collection</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f4f9;
+      color: #333;
+    }
+    header {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    header nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 1rem;
+      transition: color 0.3s ease;
+    }
+    header nav a:hover { color: #ffd700; }
+
+    button.cache-btn {
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+      background: #203864;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button.cache-btn:hover { background: #1a2d52; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      text-align: center;
+      transition: transform 0.25s ease;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .card img.thumb {
+       width: 100%;
+  height: 200px;     /* 原来150px，改为200px，让图片更大 */
+  object-fit: cover; /* 改成 cover，铺满区域，不会留白 */
+  background: #fff;
+  cursor: pointer;
+    }
+    .title { padding: 0.5rem; font-size: 1rem; color: #203864; font-weight: bold; }
+    .room { font-size: 0.85rem; color: #666; }
+    .audio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+    .audio-btn img {
+      width: 18px; height: 18px; transition: transform 0.2s ease;
+    }
+    .audio-btn:hover img { transform: scale(1.2); }
+
+    .modal {
+      display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+      justify-content: center; align-items: center;
+    }
+    .modal img { max-width: 80%; max-height: 80%; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The NGA Collection</h1>
+    <nav>
+      <a href="../index.html">← Home</a>
+      <a href="../about.html">About Us</a>
+    </nav>
+  </header>
+
+  <button class="cache-btn" onclick="cacheAllAudio()">Preload for Instant QR Play 🎧</button>
+
+<div id="cache-status" style="margin-top:10px; color:#203864; font-weight:bold;"></div>
+
+
+
+  <main class="grid" id="gallery"></main>
+
+  <!-- 大图弹窗 -->
+  <div class="modal" id="imgModal" onclick="closeModal()">
+    <img id="modalImg" src="" alt="Exhibit">
+  </div>
+
+  <!-- 音频播放器 -->
+  <audio id="audioPlayer" controls style="display:none;"></audio>
+
+  <script>
+    // ✅ 全部 54 条展品数据直接写在这里
+   const exhibits = [
+  { "title": "Chalice of the Abbot Suger of Saint-Denis", "room": "west_G18", "image": "assets/full/NBJ.jpg", "thumb": "assets/thumbs/NBJ.jpg", "audio": "audio/NBJ.mp3" },
+  { "title": "Ginevra de' Benci", "room": "west_6", "image": "assets/full/NSJ.jpg", "thumb": "assets/thumbs/NSJ.jpg", "audio": "audio/NSJ.mp3" },
+  { "title": "George Washington", "room": "west_60A", "image": "assets/full/NT01.jpg", "thumb": "assets/thumbs/NT01.jpg", "audio": "audio/NT01.mp3" },
+  { "title": "Watson and the Shark", "room": "west_60B", "image": "assets/full/NT02.jpg", "thumb": "assets/thumbs/NT02.jpg", "audio": "audio/NT02.mp3" },
+  { "title": "Autumn - On the Hudson River", "room": "west_64", "image": "assets/full/NT03.jpg", "thumb": "assets/thumbs/NT03.jpg", "audio": "audio/NT03.mp3" },
+  { "title": "Storage Jar", "room": "west_65", "image": "assets/full/NT04.jpg", "thumb": "assets/thumbs/NT04.jpg", "audio": "audio/NT04.mp3?bypass=1" },
+  { "title": "The Jolly Flatboatmen", "room": "west_65", "image": "assets/full/NT05.jpg", "thumb": "assets/thumbs/NT05.jpg", "audio": "audio/NT05.mp3" },
+  { "title": "Green River Cliffs, Wyoming", "room": "west_67", "image": "assets/full/NT06.jpg", "thumb": "assets/thumbs/NT06.jpg", "audio": "audio/NT06.mp3" },
+  { "title": "The Biglin Brothers Racing", "room": "west_68", "image": "assets/full/NT07.jpg", "thumb": "assets/thumbs/NT07.jpg", "audio": "audio/NT07.mp3" },
+  { "title": "Breezing Up (A Fair Wind)", "room": "west_68", "image": "assets/full/NT08.jpg", "thumb": "assets/thumbs/NT08.jpg", "audio": "audio/NT08.mp3" },
+  { "title": "Symphony in White, No. 1: The White Girl", "room": "west_69", "image": "assets/full/NT09.jpg", "thumb": "assets/thumbs/NT09.jpg", "audio": "audio/NT09.mp3" },
+  { "title": "Niagara", "room": "west_71", "image": "assets/full/NT10.jpg", "thumb": "assets/thumbs/NT10.jpg", "audio": "audio/NT10.mp3" },
+  { "title": "New York", "room": "east_106B", "image": "assets/full/NT11.jpg", "thumb": "assets/thumbs/NT11.jpg", "audio": "audio/NT11.mp3" },
+  { "title": "The Lone Tenement", "room": "east_106C", "image": "assets/full/NT12.jpg", "thumb": "assets/thumbs/NT12.jpg", "audio": "audio/NT12.mp3" },
+  { "title": "Hudson River, Logging", "room": "west_G22A", "image": "assets/full/NT13.jpg", "thumb": "assets/thumbs/NT13.jpg", "audio": "audio/NT13.mp3" },
+  { "title": "The Annunciation", "room": "west_39", "image": "assets/full/NB01.jpg", "thumb": "assets/thumbs/NB01.jpg", "audio": "audio/NB01.mp3" },
+  { "title": "Saint George and the Dragon", "room": "west_39", "image": "assets/full/NB02.jpg", "thumb": "assets/thumbs/NB02.jpg", "audio": "audio/NB02.mp3" },
+  { "title": "The Dancing Couple", "room": "west_46", "image": "assets/full/NB03.jpg", "thumb": "assets/thumbs/NB03.jpg", "audio": "audio/NB03.mp3" },
+  { "title": "Self-Portrait", "room": "west_48", "image": "assets/full/NB04.jpg", "thumb": "assets/thumbs/NB04.jpg", "audio": "audio/NB04.mp3" },
+  { "title": "The Mill", "room": "west_48", "image": "assets/full/NB05.jpg", "thumb": "assets/thumbs/NB05.jpg", "audio": "audio/NB05.mp3" },
+  { "title": "Woman Holding a Balance", "room": "west_50A", "image": "assets/full/NB06.jpg", "thumb": "assets/thumbs/NB06.jpg", "audio": "audio/NB06.mp3" },
+  { "title": "A Lady Writing", "room": "west_50A", "image": "assets/full/NB07.jpg", "thumb": "assets/thumbs/NB07.jpg", "audio": "audio/NB07.mp3" },
+  { "title": "Dishes with Oysters, Fruit, and Wine", "room": "west_50B", "image": "assets/full/NB08.jpg", "thumb": "assets/thumbs/NB08.jpg", "audio": "audio/NB08.mp3" },
+  { "title": "Keelmen Heaving in Coals by Moonlight", "room": "west_57", "image": "assets/full/NB09.jpg", "thumb": "assets/thumbs/NB09.jpg", "audio": "audio/NB09.mp3" },
+  { "title": "Wivenhoe Park, Essex", "room": "west_57", "image": "assets/full/NB10.jpg", "thumb": "assets/thumbs/NB10.jpg", "audio": "audio/NB10.mp3" },
+  { "title": "The White Horse", "room": "west_57", "image": "assets/full/NB11.jpg", "thumb": "assets/thumbs/NB11.jpg", "audio": "audio/NB11.mp3" },
+  { "title": "Approach to Venice", "room": "west_57", "image": "assets/full/NB12.jpg", "thumb": "assets/thumbs/NB12.jpg", "audio": "audio/NB12.mp3" },
+  { "title": "Mrs. Richard Brinsley Sheridan", "room": "west_59", "image": "assets/full/NB13.jpg", "thumb": "assets/thumbs/NB13.jpg", "audio": "audio/NB13.mp3" },
+  { "title": "The Adoration of the Magi", "room": "west_4", "image": "assets/full/NR01.jpg", "thumb": "assets/thumbs/NR01.jpg", "audio": "audio/NR01.mp3" },
+  { "title": "Venus with a Mirror", "room": "west_11", "image": "assets/full/NR02.jpg", "thumb": "assets/thumbs/NR02.jpg", "audio": "audio/NR02.mp3" },
+  { "title": "The Feast of the Gods", "room": "west_17", "image": "assets/full/NR03.jpg", "thumb": "assets/thumbs/NR03.jpg", "audio": "audio/NR03.mp3" },
+  { "title": "The Alba Madonna", "room": "west_20", "image": "assets/full/NR04.jpg", "thumb": "assets/thumbs/NR04.jpg", "audio": "audio/NR04.mp3" },
+  { "title": "The Adoration of the Shepherds", "room": "west_Lobby B", "image": "assets/full/NR05.jpg", "thumb": "assets/thumbs/NR05.jpg", "audio": "audio/NR05.mp3" },
+  { "title": "The Square of Saint Mark's, Venice", "room": "west_31", "image": "assets/full/NR06.jpg", "thumb": "assets/thumbs/NR06.jpg", "audio": "audio/NR06.mp3" },
+  { "title": "Lucia Bonasoni Garzoni", "room": "west_33", "image": "assets/full/NR07.jpg", "thumb": "assets/thumbs/NR07.jpg", "audio": "audio/NR07.mp3" },
+  { "title": "Virgin and Child", "room": "west_34", "image": "assets/full/NR08.jpg", "thumb": "assets/thumbs/NR08.jpg", "audio": "audio/NR08.mp3" },
+  { "title": "Two Women at a Window", "room": "west_34", "image": "assets/full/NR09.jpg", "thumb": "assets/thumbs/NR09.jpg", "audio": "audio/NR09.mp3" },
+  { "title": "Landscape with Merchants", "room": "west_36", "image": "assets/full/NR10.jpg", "thumb": "assets/thumbs/NR10.jpg", "audio": "audio/NR10.mp3" },
+  { "title": "Daniel in the Lions' Den", "room": "west_45", "image": "assets/full/NR11.jpg", "thumb": "assets/thumbs/NR11.jpg", "audio": "audio/NR11.mp3" },
+  { "title": "The Fall of Phaeton", "room": "west_45", "image": "assets/full/NR12.jpg", "thumb": "assets/thumbs/NR12.jpg", "audio": "audio/NR12.mp3" },
+  { "title": "The Marquise de Pezay, and the Marquise de Rougé with Her Sons Alexis and Adrien", "room": "west_56", "image": "assets/full/NR13.jpg", "thumb": "assets/thumbs/NR13.jpg", "audio": "audio/NR13.mp3" },
+  { "title": "Young Girl Reading", "room": "west_54", "image": "assets/full/NM01.jpg", "thumb": "assets/thumbs/NM01.jpg", "audio": "audio/NM01.mp3" },
+  { "title": "Rouen Cathedral, West Façade, Sunlight", "room": "west_80", "image": "assets/full/NM02.jpg", "thumb": "assets/thumbs/NM02.jpg", "audio": "audio/NM02.mp3" },
+  { "title": "Self-Portrait", "room": "west_83", "image": "assets/full/NM03.jpg", "thumb": "assets/thumbs/NM03.jpg", "audio": "audio/NM03.mp3" },
+  { "title": "Farmhouse in Provence", "room": "west_83", "image": "assets/full/NM04.jpg", "thumb": "assets/thumbs/NM04.jpg", "audio": "audio/NM04.mp3" },
+  { "title": "Self-Portrait", "room": "west_83", "image": "assets/full/NM05.jpg", "thumb": "assets/thumbs/NM05.jpg", "audio": "audio/NM05.mp3" },
+  { "title": "The Dance Class", "room": "west_83", "image": "assets/full/NM06.jpg", "thumb": "assets/thumbs/NM06.jpg", "audio": "audio/NM06.mp3" },
+  { "title": "The Japanese Footbridge", "room": "west_85", "image": "assets/full/NM07.jpg", "thumb": "assets/thumbs/NM07.jpg", "audio": "audio/NM07.mp3" },
+  { "title": "Woman with a Sunflower", "room": "west_86", "image": "assets/full/NM08.jpg", "thumb": "assets/thumbs/NM08.jpg", "audio": "audio/NM08.mp3" },
+  { "title": "Little Girl in a Blue Armchair", "room": "west_86", "image": "assets/full/NM09.jpg", "thumb": "assets/thumbs/NM09.jpg", "audio": "audio/NM09.mp3" },
+  { "title": "The Railway", "room": "west_89", "image": "assets/full/NM10.jpg", "thumb": "assets/thumbs/NM10.jpg", "audio": "audio/NM10.mp3" },
+  { "title": "The Old Musician", "room": "west_89", "image": "assets/full/NM11.jpg", "thumb": "assets/thumbs/NM11.jpg", "audio": "audio/NM11.mp3" },
+  { "title": "The Repose", "room": "west_90", "image": "assets/full/NM12.jpg", "thumb": "assets/thumbs/NM12.jpg", "audio": "audio/NM12.mp3" },
+  { "title": "Little Dancer Aged Fourteen", "room": "west_G3", "image": "assets/full/NM13.jpg", "thumb": "assets/thumbs/NM13.jpg", "audio": "audio/NM13.mp3" }
+];
+
+
+    // 渲染展品
+    const gallery = document.getElementById("gallery");
+    exhibits.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <img class="thumb" src="${item.thumb}" alt="${item.title}" onclick="openModal('${item.image}')">
+        <div class="title">${item.title}</div>
+       <div class="room">Room ${item.room}</div>
+       <button class="audio-btn" onclick="playAudio('${item.audio}')">
+          <img src="assets/images/headphone.png" alt="Play Audio">
+        </button>
+      `;
+      gallery.appendChild(card);
+    });
+
+    // 打开大图
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imgModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
+    }
+
+    // 播放音频
+    function playAudio(file) {
+      const player = document.getElementById("audioPlayer");
+      player.src = file;
+      player.style.display = "block";   // ✅ 显示播放器
+      player.play();
+    }
+
+    // 缓存所有音频
+async function cacheAllAudio() {
+  const status = document.getElementById("cache-status");
+
+  if (!('caches' in window)) {
+    status.innerText = "❌ Offline caching is not supported in this browser.";
+    return;
+  }
+
+  const cache = await caches.open('nga-audio-cache-v1');
+  let count = 0;
+
+  status.innerText = "⏳ Caching started...";
+
+  for (const item of exhibits) {
+    try {
+      await cache.add(item.audio);
+      count++;
+      status.innerText = `🔊 Cached ${count}/${exhibits.length}`;
+    } catch (err) {
+      console.error("Failed to cache:", item.audio, err);
+    }
+  }
+
+  status.innerText = "✅ All audio cached. Ready to play instantly!";
+}
+
+  </script>
+</body>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js")
+    .then(() => console.log("Service Worker 注册成功"))
+    .catch((err) => console.error("SW 注册失败:", err));
+}
+</script>
+
+
+</html>

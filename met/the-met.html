@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>The MET Collection</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f4f4f9;
+      color: #333;
+    }
+    header {
+      background: #203864;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header h1 { margin: 0; font-size: 1.5rem; }
+    header nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      margin-left: 1rem;
+      transition: color 0.3s ease;
+    }
+    header nav a:hover { color: #ffd700; }
+
+    button.cache-btn {
+      margin: 1rem;
+      padding: 0.5rem 1rem;
+      background: #203864;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button.cache-btn:hover { background: #1a2d52; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+      text-align: center;
+      transition: transform 0.25s ease;
+    }
+    .card:hover { transform: translateY(-5px); }
+    .card img.thumb {
+       width: 100%;
+  height: 200px;     /* 原来150px，改为200px，让图片更大 */
+  object-fit: cover; /* 改成 cover，铺满区域，不会留白 */
+  background: #fff;
+  cursor: pointer;
+    }
+    .title { padding: 0.5rem; font-size: 1rem; color: #203864; font-weight: bold; }
+    .room { font-size: 0.85rem; color: #666; }
+    .audio-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.5rem;
+    }
+    .audio-btn img {
+      width: 18px; height: 18px; transition: transform 0.2s ease;
+    }
+    .audio-btn:hover img { transform: scale(1.2); }
+
+    .modal {
+      display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; background: rgba(0,0,0,0.7);
+      justify-content: center; align-items: center;
+    }
+    .modal img { max-width: 80%; max-height: 80%; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The MET Collection</h1>
+    <nav>
+      <a href="../index.html">← Home</a>
+      <a href="../about.html">About Us</a>
+    </nav>
+  </header>
+
+  <button class="cache-btn" onclick="cacheAllAudio()">Preload for Instant QR Play 🎧</button>
+
+<div id="cache-status" style="margin-top:10px; color:#203864; font-weight:bold;"></div>
+
+
+
+  <main class="grid" id="gallery"></main>
+
+  <!-- 大图弹窗 -->
+  <div class="modal" id="imgModal" onclick="closeModal()">
+    <img id="modalImg" src="" alt="Exhibit">
+  </div>
+
+  <!-- 音频播放器 -->
+  <audio id="audioPlayer" controls style="display:none;"></audio>
+
+  <script>
+    // ✅ 全部 54 条展品数据直接写在这里
+    const exhibits = [
+     {
+    "title": "George Washington",
+    "room": "760",
+    "image": "assets/full/2025MET-K.jpg",
+    "thumb": "assets/thumbs/2025MET-K.jpg",
+    "audio": "audio/2025MET-K.mp3"
+  },
+  {
+    "title": "Reliquary Casket with Scenes from the Martyrdom of Saint Thomas Becket",
+    "room": "304",
+    "image": "assets/full/2025METF-01.jpg",
+    "thumb": "assets/thumbs/2025METF-01.jpg",
+    "audio": "audio/2025METF-01.mp3"
+  },
+  {
+    "title": "The Visitation",
+    "room": "304",
+    "image": "assets/full/2025METF-02.jpg",
+    "thumb": "assets/thumbs/2025METF-02.jpg",
+    "audio": "audio/2025METF-02.mp3"
+  },
+  {
+    "title": "Mirror Case",
+    "room": "304",
+    "image": "assets/full/2025METF-03.jpg",
+    "thumb": "assets/thumbs/2025METF-03.jpg",
+    "audio": "audio/2025METF-03.mp3"
+  },
+  {
+    "title": "Bedroom from the Sagredo Palace",
+    "room": "507",
+    "image": "assets/full/2025METF-04.jpg",
+    "thumb": "assets/thumbs/2025METF-04.jpg",
+    "audio": "audio/2025METF-04.mp3"
+  },
+  {
+    "title": "Triton",
+    "room": "509",
+    "image": "assets/full/2025METF-05.jpg",
+    "thumb": "assets/thumbs/2025METF-05.jpg",
+    "audio": "audio/2025METF-05.mp3"
+
+  },
+  {
+    "title": "Patio from the Castle of Vélez Blanco",
+    "room": "534",
+    "image": "assets/full/2025METF-06.jpg",
+    "thumb": "assets/thumbs/2025METF-06.jpg",
+    "audio": "audio/2025METF-06.mp3"
+
+  },
+  {
+    "title": "Coffeepot",
+    "room": "545",
+    "image": "assets/full/2025METF-07.jpg",
+    "thumb": "assets/thumbs/2025METF-07.jpg",
+    "audio": "audio/2025METF-07.mp3"
+
+  },
+  {
+    "title": "Perseus with the Head of Medusa",
+    "room": "548",
+    "image": "assets/full/2025METF-08.jpg",
+    "thumb": "assets/thumbs/2025METF-08.jpg",
+    "audio": "audio/2025METF-08.mp3"
+
+  },
+  {
+    "title": "Oedipus and the Sphinx",
+    "room": "800",
+    "image": "assets/full/2025METF-09.jpg",
+    "thumb": "assets/thumbs/2025METF-09.jpg",
+    "audio": "audio/2025METF-09.mp3"
+
+  },
+  {
+    "title": "The Horse Fair",
+    "room": "812",
+    "image": "assets/full/2025METF-10.jpg",
+    "thumb": "assets/thumbs/2025METF-10.jpg",
+    "audio": "audio/2025METF-10.mp3"
+
+  },
+  {
+    "title": "The Dance Class",
+    "room": "815",
+    "image": "assets/full/2025METF-11.jpg",
+    "thumb": "assets/thumbs/2025METF-11.jpg",
+    "audio": "audio/2025METF-11.mp3"
+
+  },
+  {
+    "title": "Wheat Field with Cypresses",
+    "room": "822",
+    "image": "assets/full/2025METF-12.jpg",
+    "thumb": "assets/thumbs/2025METF-12.jpg",
+    "audio": "audio/2025METF-12.mp3"
+
+  },
+  {
+    "title": "Ia Orana Maria (Hail Mary)",
+    "room": "825",
+    "image": "assets/full/2025METF-13.jpg",
+    "thumb": "assets/thumbs/2025METF-13.jpg",
+    "audio": "audio/2025METF-13.mp3"
+
+  },
+  {
+    "title": "Terracotta Panathenaic prize amphora",
+    "room": "153",
+    "image": "assets/full/2025METH-01.jpg",
+    "thumb": "assets/thumbs/2025METH-01.jpg",
+    "audio": "audio/2025METH-01.mp3"
+
+  },
+  {
+    "title": "Marble statue of an old woman",
+    "room": "162",
+    "image": "assets/full/2025METH-02.jpg",
+    "thumb": "assets/thumbs/2025METH-02.jpg",
+    "audio": "audio/2025METH-02.mp3"
+
+  },
+  {
+    "title": "Gold armband with Herakles knot",
+    "room": "163",
+    "image": "assets/full/2025METH-03.jpg",
+    "thumb": "assets/thumbs/2025METH-03.jpg",
+    "audio": "audio/2025METH-03.mp3"
+
+  },
+  {
+    "title": "Bronze statue of Eros sleeping",
+    "room": "164",
+    "image": "assets/full/2025METH-04.jpg",
+    "thumb": "assets/thumbs/2025METH-04.jpg",
+    "audio": "audio/2025METH-04.mp3"
+
+  },
+  {
+    "title": "Wall painting: Perseus and Andromeda in landscape, from the imperial villa at Boscotrecase",
+    "room": "166",
+    "image": "assets/full/2025METH-05.jpg",
+    "thumb": "assets/thumbs/2025METH-05.jpg",
+    "audio": "audio/2025METH-05.mp3"
+
+  },
+  {
+    "title": "Porphyry vessel with bearded masks",
+    "room": "166",
+    "image": "assets/full/2025METH-06.jpg",
+    "thumb": "assets/thumbs/2025METH-06.jpg",
+    "audio": "audio/2025METH-06.mp3"
+
+  },
+  {
+    "title": "Glass garland bowl",
+    "room": "166",
+    "image": "assets/full/2025METH-07.jpg",
+    "thumb": "assets/thumbs/2025METH-07.jpg",
+    "audio": "audio/2025METH-07.mp3"
+
+  },
+  {
+    "title": "Bronze chariot inlaid with ivory",
+    "room": "170",
+    "image": "assets/full/2025METH-08.jpg",
+    "thumb": "assets/thumbs/2025METH-08.jpg",
+    "audio": "audio/2025METH-08.mp3"
+
+  },
+  {
+    "title": "Armor of Henry II, King of France (reigned 1547–59)",
+    "room": "374",
+    "image": "assets/full/2025METH-09.jpg",
+    "thumb": "assets/thumbs/2025METH-09.jpg",
+    "audio": "audio/2025METH-09.mp3"
+
+  },
+  {
+    "title": "Rapier of Prince-Elector Christian II of Saxony (1583–1611)",
+    "room": "376",
+    "image": "assets/full/2025METH-10.jpg",
+    "thumb": "assets/thumbs/2025METH-10.jpg",
+    "audio": "audio/2025METH-10.mp3"
+
+  },
+  {
+    "title": "Helmet (Sallet)",
+    "room": "379",
+    "image": "assets/full/2025METH-11.jpg",
+    "thumb": "assets/thumbs/2025METH-11.jpg",
+    "audio": "audio/2025METH-11.mp3"
+
+  },
+  {
+    "title": "Short Sword (Yatagan) from the Court of Süleyman the Magnificent (reigned 1520–66)",
+    "room": "379",
+    "image": "assets/full/2025METH-12.jpg",
+    "thumb": "assets/thumbs/2025METH-12.jpg",
+    "audio": "audio/2025METH-12.mp3"
+
+  },
+  {
+    "title": "Waistcoat",
+    "room": "513",
+    "image": "assets/full/2025METH-13.jpg",
+    "thumb": "assets/thumbs/2025METH-13.jpg",
+    "audio": "audio/2025METH-13.mp3"
+
+  },
+  {
+    "title": "Pectoral and Necklace of Sithathoryunet with the Name of Senwosret II",
+    "room": "111",
+    "image": "assets/full/2025METR-01.jpg",
+    "thumb": "assets/thumbs/2025METR-01.jpg",
+    "audio": "audio/2025METR-01.mp3"
+
+  },
+  {
+    "title": "Hippopotamus (\"William\")",
+    "room": "111",
+    "image": "assets/full/2025METR-02.jpg",
+    "thumb": "assets/thumbs/2025METR-02.jpg",
+    "audio": "audio/2025METR-02.mp3"
+
+  },
+  {
+    "title": "Canopic Jar (07.226.1) with a Lid Depicting a Queen (30.8.54)",
+    "room": "121",
+    "image": "assets/full/2025METR-03.jpg",
+    "thumb": "assets/thumbs/2025METR-03.jpg",
+    "audio": "audio/2025METR-03.mp3"
+
+  },
+  {
+    "title": "Book of the Dead for the Chantress of Amun Nauny",
+    "room": "126",
+    "image": "assets/full/2025METR-04.jpg",
+    "thumb": "assets/thumbs/2025METR-04.jpg",
+    "audio": "audio/2025METR-04.mp3"
+
+  },
+  {
+    "title": "Arched Harp (shoulder harp)",
+    "room": "130",
+    "image": "assets/full/2025METR-05.jpg",
+    "thumb": "assets/thumbs/2025METR-05.jpg",
+    "audio": "audio/2025METR-05.mp3"
+
+  },
+  {
+    "title": "The Temple of Dendur",
+    "room": "131",
+    "image": "assets/full/2025METR-06.jpg",
+    "thumb": "assets/thumbs/2025METR-06.jpg",
+    "audio": "audio/2025METR-06.mp3"
+
+  },
+  {
+    "title": "Jar with dragon",
+    "room": "202",
+    "image": "assets/full/2025METR-07.jpg",
+    "thumb": "assets/thumbs/2025METR-07.jpg",
+    "audio": "audio/2025METR-07.mp3"
+
+  },
+  {
+    "title": "Buddha Maitreya (Mile) Altarpiece",
+    "room": "207",
+    "image": "assets/full/2025METR-08.jpg",
+    "thumb": "assets/thumbs/2025METR-08.jpg",
+    "audio": "audio/2025METR-08.mp3"
+
+  },
+  {
+    "title": "Illustrated Legends of the Kitano Tenjin Shrine (Kitano Tenjin engi emaki)",
+    "room": "223",
+    "image": "assets/full/2025METR-09.jpg",
+    "thumb": "assets/thumbs/2025METR-09.jpg",
+    "audio": "audio/2025METR-09.mp3"
+
+  },
+  {
+    "title": "Shiva as Lord of Dance (Nataraja)",
+    "room": "240",
+    "image": "assets/full/2025METR-10.jpg",
+    "thumb": "assets/thumbs/2025METR-10.jpg",
+    "audio": "audio/2025METR-10.mp3"
+
+  },
+  {
+    "title": "Standing Ganesha",
+    "room": "251",
+    "image": "assets/full/2025METR-11.jpg",
+    "thumb": "assets/thumbs/2025METR-11.jpg",
+    "audio": "audio/2025METR-11.mp3"
+
+  },
+  {
+    "title": "Guqin (古琴 )",
+    "room": "684",
+    "image": "assets/full/2025METR-12.jpg",
+    "thumb": "assets/thumbs/2025METR-12.jpg",
+    "audio": "audio/2025METR-12.mp3"
+
+  },
+  {
+    "title": "\"The Gould\" Violin",
+    "room": "684",
+    "image": "assets/full/2025METR-13.jpg",
+    "thumb": "assets/thumbs/2025METR-13.jpg",
+    "audio": "audio/2025METR-13.mp3"
+
+  },
+  {
+    "title": "Head of an Oba",
+    "room": "342",
+    "image": "assets/full/2025METM-01.jpg",
+    "thumb": "assets/thumbs/2025METM-01.jpg",
+    "audio": "audio/2025METM-01.mp3"
+
+  },
+  {
+    "title": "Processional Cross",
+    "room": "344",
+    "image": "assets/full/2025METM-02.jpg",
+    "thumb": "assets/thumbs/2025METM-02.jpg",
+    "audio": "audio/2025METM-02.mp3"
+
+  },
+  {
+    "title": "Bottle with caiman",
+    "room": "362",
+    "image": "assets/full/2025METM-03.jpg",
+    "thumb": "assets/thumbs/2025METM-03.jpg",
+    "audio": "audio/2025METM-03.mp3"
+
+  },
+  {
+    "title": "Kitab suwar al-kawakib al-thabita (Book of the Images of the Fixed Stars) of al-Sufi",
+    "room": "454",
+    "image": "assets/full/2025METM-04.jpg",
+    "thumb": "assets/thumbs/2025METM-04.jpg",
+    "audio": "audio/2025METM-04.mp3"
+
+  },
+  {
+    "title": "Mosque Lamp for the Mausoleum of Amir Aydakin al-'Ala'i al-Bunduqdar",
+    "room": "454",
+    "image": "assets/full/2025METM-05.jpg",
+    "thumb": "assets/thumbs/2025METM-05.jpg",
+    "audio": "audio/2025METM-05.mp3"
+
+  },
+  {
+    "title": "Astrolabe of ‘Umar ibn Yusuf ibn ‘Umar ibn ‘Ali ibn Rasul al-Muzaffari",
+    "room": "454",
+    "image": "assets/full/2025METM-06.jpg",
+    "thumb": "assets/thumbs/2025METM-06.jpg",
+    "audio": "audio/2025METM-06.mp3"
+
+  },
+  {
+    "title": "Damascus Room",
+    "room": "461",
+    "image": "assets/full/2025METM-07.jpg",
+    "thumb": "assets/thumbs/2025METM-07.jpg",
+    "audio": "audio/2025METM-07.mp3"
+
+  },
+  {
+    "title": "The Anhalt Medallion Carpet",
+    "room": "462",
+    "image": "assets/full/2025METM-08.jpg",
+    "thumb": "assets/thumbs/2025METM-08.jpg",
+    "audio": "audio/2025METM-08.mp3"
+
+  },
+  {
+    "title": "The Bryant Vase",
+    "room": "706",
+    "image": "assets/full/2025METM-09.jpg",
+    "thumb": "assets/thumbs/2025METM-09.jpg",
+    "audio": "audio/2025METM-09.mp3"
+
+  },
+  {
+    "title": "The Rocky Mountains, Lander's Peak",
+    "room": "760",
+    "image": "assets/full/2025METM-10.jpg",
+    "thumb": "assets/thumbs/2025METM-10.jpg",
+    "audio": "audio/2025METM-10.mp3"
+
+  },
+  {
+    "title": "Washington Crossing the Delaware",
+    "room": "760",
+    "image": "assets/full/2025METM-11.jpg",
+    "thumb": "assets/thumbs/2025METM-11.jpg",
+    "audio": "audio/2025METM-11.mp3"
+
+  },
+  {
+    "title": "Diana",
+    "room": "766",
+    "image": "assets/full/2025METM-12.jpg",
+    "thumb": "assets/thumbs/2025METM-12.jpg",
+    "audio": "audio/2025METM-12.mp3"
+
+  },
+  {
+    "title": "The Gulf Stream",
+    "room": "767",
+    "image": "assets/full/2025METM-13.jpg",
+    "thumb": "assets/thumbs/2025METM-13.jpg",
+    "audio": "audio/2025METM-13.mp3"
+
+  },
+  {
+    "title": "Queen Mother Pendant Mask: Iyoba",
+    "room": "342",
+    "image": "assets/full/2025MET-Q.jpg",
+    "thumb": "assets/thumbs/2025MET-Q.jpg",
+    "audio": "audio/2025MET-Q.mp3"
+
+  }
+
+    ];
+
+    // 渲染展品
+    const gallery = document.getElementById("gallery");
+    exhibits.forEach(item => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <img class="thumb" src="${item.thumb}" alt="${item.title}" onclick="openModal('${item.image}')">
+        <div class="title">${item.title}</div>
+        <div class="room">Room ${item.room}</div>
+        <button class="audio-btn" onclick="playAudio('${item.audio}')">
+          <img src="assets/images/headphone.png" alt="Play Audio">
+        </button>
+      `;
+      gallery.appendChild(card);
+    });
+
+    // 打开大图
+    function openModal(src) {
+      document.getElementById("modalImg").src = src;
+      document.getElementById("imgModal").style.display = "flex";
+    }
+    function closeModal() {
+      document.getElementById("imgModal").style.display = "none";
+    }
+
+    // 播放音频
+    function playAudio(file) {
+      const player = document.getElementById("audioPlayer");
+      player.src = file;
+      player.play();
+    }
+
+    // 缓存所有音频
+async function cacheAllAudio() {
+  const status = document.getElementById("cache-status");
+
+  if (!('caches' in window)) {
+    status.innerText = "❌ Offline caching is not supported in this browser.";
+    return;
+  }
+
+  const cache = await caches.open('met-audio-cache-v1');
+  let count = 0;
+
+  status.innerText = "⏳ Caching started...";
+
+  for (const item of exhibits) {
+    try {
+      await cache.add(item.audio);
+      count++;
+      status.innerText = `🔊 Cached ${count}/${exhibits.length}`;
+    } catch (err) {
+      console.error("Failed to cache:", item.audio, err);
+    }
+  }
+
+  status.innerText = "✅ All audio cached. Ready to play instantly!";
+}
+
+  </script>
+</body>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js")
+    .then(() => console.log("Service Worker 注册成功"))
+    .catch((err) => console.error("SW 注册失败:", err));
+}
+</script>
+
+
+</html>
