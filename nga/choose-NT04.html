@@ -24,6 +24,31 @@
       min-height:100svh;
       padding:20px;
     }
+
+/* 播放高亮样式 */
+.opt.playing{
+  border-color:#60a5fa;
+  background:#0f1b2f;
+  box-shadow:0 0 0 3px rgba(96,165,250,.35) inset, 0 8px 28px rgba(0,0,0,.45);
+  transform:translateY(-2px);
+}
+.opt.playing .title{ color:#e0eaff; }
+
+/* 当前播放按钮的视觉状态（JS 会设置 aria-pressed） */
+.btn.ghost[aria-pressed="true"]{
+  background:var(--navy);
+  color:#fff;
+  border-color:var(--navy);
+}
+
+.title .suit {
+  font-size: 1.4em;
+  vertical-align: -0.05em;
+  margin-right: 4px;
+  font-weight: 900;
+}
+
+
     .card{
       width:min(820px,94vw);
       background:var(--panel);
@@ -109,67 +134,90 @@
     <p>
       Due to a printing error, this QR code links to two different cards.
       Please tap the card you are holding to listen to its audio guide.
-      <span class="badge">Affects early prints only</span>
+     
     </p>
 
     <section class="grid">
       <!-- Spade 3 -->
-      <article class="opt" data-src="https://museumdeck.com/nga/audio/NB03.mp3">
+      <article class="opt" data-src="https://museumdeck.com/nga/audio/NB03new.mp3">
         <div class="img">
           <img src="https://museumdeck.com/nga/assets/thumbs/NB03.jpg" alt="Spade 3 card" loading="lazy" width="640" height="480">
         </div>
         <div class="meta">
-          <h2 class="title">♠️ Spade 3</h2>
+         <h2 class="title"><span class="suit">♠</span> Spade 3</h2>
           <div class="sub">Listen to the audio for Spade 3</div>
           <div class="row">
-            <a class="btn" href="https://museumdeck.com/nga/audio/NB03.mp3">Open audio</a>
+       
             <button class="btn ghost" type="button" data-play>Play here</button>
           </div>
         </div>
       </article>
 
       <!-- Diamond 4 -->
-      <article class="opt" data-src="https://museumdeck.com/nga/audio/NT04.mp3">
+      <article class="opt" data-src="https://museumdeck.com/nga/audio/NT04new.mp3">
         <div class="img">
           <img src="https://museumdeck.com/nga/assets/thumbs/NT04.jpg" alt="Diamond 4 card" loading="lazy" width="640" height="480">
         </div>
         <div class="meta">
-          <h2 class="title">♦️ Diamond 4</h2>
+          <h2 class="title"><span class="suit">♦️</span> Diamond 4</h2>
           <div class="sub">Listen to the audio for Diamond 4</div>
           <div class="row">
-            <a class="btn" href="https://museumdeck.com/nga/audio/NT04.mp3">Open audio</a>
+            
             <button class="btn ghost" type="button" data-play>Play here</button>
           </div>
         </div>
       </article>
     </section>
 
-    <p class="note">Tip: If you select the same card twice, you’ll hear the same audio—no need to download again.</p>
+   
     <audio id="player" preload="none" controls></audio>
 
     <noscript>
       <p><strong>JavaScript required.</strong> You can still open manually:</p>
       <ul>
-        <li><a href="https://museumdeck.com/nga/audio/NB03.mp3">Spade 3 audio</a></li>
-        <li><a href="https://museumdeck.com/nga/audio/NT04.mp3">Diamond 4 audio</a></li>
+        <li><a href="https://museumdeck.com/nga/audio/NB03new.mp3">Spade 3 audio</a></li>
+        <li><a href="https://museumdeck.com/nga/audio/NT04new.mp3">Diamond 4 audio</a></li>
       </ul>
     </noscript>
   </main>
 
   <script>
-    (function(){
-      const player = document.getElementById('player');
-      document.querySelectorAll('[data-play]').forEach(btn=>{
-        btn.addEventListener('click', e=>{
-          const card = e.currentTarget.closest('.opt');
-          const src = card && card.getAttribute('data-src');
-          if(!src) return;
-          player.src = src;
-          player.style.display = 'block';
-          player.play && player.play().catch(()=>{});
-        });
-      });
-    })();
+   (function(){
+  const player = document.getElementById('player');
+  const cards  = document.querySelectorAll('.opt');
+
+  function setPlaying(card){
+    // 先清除全部高亮与按钮状态
+    cards.forEach(c=>{
+      c.classList.remove('playing');
+      const b = c.querySelector('[data-play]');
+      if(b) b.setAttribute('aria-pressed','false');
+    });
+    // 给当前卡片加高亮，并标记按钮状态
+    if(card){
+      card.classList.add('playing');
+      const b = card.querySelector('[data-play]');
+      if(b) b.setAttribute('aria-pressed','true');
+    }
+  }
+
+  document.querySelectorAll('[data-play]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const card = e.currentTarget.closest('.opt');
+      const src  = card && card.getAttribute('data-src');
+      if(!src) return;
+
+      player.src = src;
+      player.style.display = 'block';
+      setPlaying(card);
+      player.play && player.play().catch(()=>{});
+    });
+  });
+
+  // 播放结束时，移除高亮（也可以保留，按需）
+  player.addEventListener('ended', ()=> setPlaying(null));
+})();
+
   </script>
 </body>
 </html>
